@@ -15,33 +15,30 @@ func ProcessPrivateAuction(
 	positions *PositionStore,
 	budgets *BudgetStore,
 ) (*AuctionResponse, error) {
-	// 1. Get embedding: use plain vector if provided, otherwise decrypt
-	var queryEmbedding []float64
-
+	// 1. Decrypt embedding — plaintext embeddings are never accepted
 	if len(req.Embedding) > 0 {
-		// Plain embedding path — copy to avoid mutating the request
-		queryEmbedding = make([]float64, len(req.Embedding))
-		copy(queryEmbedding, req.Embedding)
-	} else {
-		hashAlg := HashAlgorithm(req.EncryptedEmbedding.HashAlgorithm)
-		if hashAlg == "" {
-			hashAlg = HashAlgorithmSHA256
-		}
+		return nil, fmt.Errorf("plaintext embeddings are not accepted; encrypt with the enclave's attested public key")
+	}
 
-		plaintext, err := DecryptHybrid(
-			req.EncryptedEmbedding.AESKeyEncrypted,
-			req.EncryptedEmbedding.EncryptedPayload,
-			req.EncryptedEmbedding.Nonce,
-			privateKey,
-			hashAlg,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("decrypt embedding: %w", err)
-		}
+	hashAlg := HashAlgorithm(req.EncryptedEmbedding.HashAlgorithm)
+	if hashAlg == "" {
+		hashAlg = HashAlgorithmSHA256
+	}
 
-		if err := json.Unmarshal(plaintext, &queryEmbedding); err != nil {
-			return nil, fmt.Errorf("unmarshal embedding: %w", err)
-		}
+	plaintext, err := DecryptHybrid(
+		req.EncryptedEmbedding.AESKeyEncrypted,
+		req.EncryptedEmbedding.EncryptedPayload,
+		req.EncryptedEmbedding.Nonce,
+		privateKey,
+		hashAlg,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("decrypt embedding: %w", err)
+	}
+
+	var queryEmbedding []float64
+	if err := json.Unmarshal(plaintext, &queryEmbedding); err != nil {
+		return nil, fmt.Errorf("unmarshal embedding: %w", err)
 	}
 
 	// Ensure we zero the embedding when done
