@@ -70,3 +70,9 @@ The exchange parent communicates via JSON envelope (`{type, payload}`) over vsoc
 **Out:** Winner ID, VCG payment, currency, bid count.
 
 **Never exits:** The query embedding, individual scores, which advertisers were filtered.
+
+## Formal verification & contact
+
+The auction mechanism (VCG pricing, `log(price) - dist²/σ²` scoring) is formally verified in Lean 4 with zero `sorry`. Paper: **[Formally Verified VCG Mechanisms for Advertising in Embedding Spaces](https://june.kim/formally-verified-vcg-mechanisms)**. Proofs: **[kimjune01/auction-proof](https://github.com/kimjune01/auction-proof)**.
+
+Maintained by June Kim, <june@june.kim>.
