@@ -57,7 +57,7 @@ func ProcessPrivateAuction(
 	// 3. Build bids from positions that can afford their bid price
 	var bids []auction.CoreBid
 	for _, pos := range allPositions {
-		if !budgets.CanAfford(pos.ID, pos.BidPrice) {
+		if !budgets.CanAfford(pos.BudgetKey(), pos.BidPrice) {
 			continue
 		}
 		bids = append(bids, auction.CoreBid{
@@ -98,7 +98,7 @@ func ProcessPrivateAuction(
 	}
 
 	// 6. Compute VCG payment
-	payment := auction.ComputeVCGPayment(result, queryEmbedding)
+	payment := auction.ComputeVCGPayment(result, queryEmbedding, 0)
 
 	return &AuctionResponse{
 		WinnerID: result.Winner.ID,
